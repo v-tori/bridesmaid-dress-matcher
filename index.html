@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hanna's Bridesmaid Dress Matcher</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: #1a2e1f;
+    color: #f4f1e8;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+  }
+
+  .container {
+    max-width: 640px;
+    width: 100%;
+    padding: 24px;
+  }
+
+  /* ---------- Upload Screen ---------- */
+  #upload-screen {
+    text-align: center;
+    animation: fadeIn 0.6s ease;
+  }
+
+  #upload-screen h1 {
+    font-size: 2.4rem;
+    background: linear-gradient(135deg, #92A46E, #C5D6A4, #A8B070);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 12px;
+  }
+
+  #upload-screen p {
+    color: #b8c5a0;
+    font-size: 1.05rem;
+    margin-bottom: 28px;
+    line-height: 1.6;
+  }
+
+  .palette-display {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-bottom: 32px;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .color-swatch {
+    aspect-ratio: 1;
+    border-radius: 50%;
+    border: 3px solid #2a3e2f;
+    transition: transform 0.2s, border-color 0.2s;
+    cursor: pointer;
+    position: relative;
+  }
+
+  .color-swatch:hover {
+    transform: scale(1.1);
+    border-color: #92A46E;
+  }
+
+  .color-swatch .color-name {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 0.65rem;
+    color: #f4f1e8;
+    text-align: center;
+    opacity: 0;
+    transition: opacity 0.2s;
+    background: rgba(26, 46, 31, 0.85);
+    padding: 4px 8px;
+    border-radius: 12px;
+    white-space: nowrap;
+    font-weight: 500;
+    pointer-events: none;
+  }
+
+  .color-swatch:hover .color-name {
+    opacity: 1;
+  }
+
+  .palette-display .color-swatch:nth-child(7) {
+    grid-column: 2;
+  }
+
+  .upload-zone {
+    background: #253525;
+    border: 3px dashed #4a5c3a;
+    border-radius: 16px;
+    padding: 48px 24px;
+    cursor: pointer;
+    transition: border-color 0.3s, background 0.3s;
+    margin-bottom: 20px;
+  }
+
+  .upload-zone:hover {
+    border-color: #92A46E;
+    background: #2a3e2a;
+  }
+
+  .upload-zone.drag-over {
+    border-color: #C5D6A4;
+    background: #2f4430;
+  }
+
+  .upload-icon {
+    font-size: 3rem;
+    margin-bottom: 12px;
+  }
+
+  .upload-text {
+    font-size: 1.1rem;
+    color: #b8c5a0;
+    margin-bottom: 8px;
+  }
+
+  .upload-hint {
+    font-size: 0.9rem;
+    color: #7a8a6c;
+  }
+
+  .file-input {
+    display: none;
+  }
+
+  .tips {
+    font-size: 0.85rem;
+    color: #7a8a6c;
+    font-style: italic;
+    margin-top: 16px;
+  }
+
+  /* ---------- Point Selection Screen ---------- */
+  #point-selection-screen {
+    display: none;
+    text-align: center;
+    animation: fadeIn 0.6s ease;
+  }
+
+  .point-selection-header {
+    margin-bottom: 20px;
+  }
+
+  .point-selection-header h2 {
+    font-size: 1.5rem;
+    color: #C5D6A4;
+    margin-bottom: 8px;
+  }
+
+  .point-selection-header p {
+    color: #b8c5a0;
+    font-size: 0.95rem;
+  }
+
+  .image-container {
+    position: relative;
+    display: inline-block;
+    margin-bottom: 20px;
+    border: 2px solid #4a5c3a;
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: crosshair;
+  }
+
+  .selectable-image {
+    max-width: 100%;
+    max-height: 400px;
+    display: block;
+  }
+
+  .point-marker {
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    margin-left: -12px;
+    margin-top: -12px;
+    border: 3px solid #92A46E;
+    background: rgba(146, 164, 110, 0.3);
+    border-radius: 50%;
+    pointer-events: none;
+    animation: markerPulse 0.3s ease;
+  }
+
+  @keyframes markerPulse {
+    0% { transform: scale(0); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+  }
+
+  .point-counter {
+    font-size: 0.9rem;
+    color: #8a9580;
+    margin-bottom: 16px;
+  }
+
+  .btn-analyze {
+    background: linear-gradient(135deg, #92A46E, #6B7A4F);
+    border: none;
+    color: #fff;
+    font-size: 1rem;
+    padding: 12px 36px;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    opacity: 0.5;
+    pointer-events: none;
+  }
+
+  .btn-analyze.active {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  .btn-analyze.active:hover {
+    transform: scale(1.05);
+    box-shadow: 0 8px 30px rgba(107, 122, 79, 0.4);
+  }
+
+  .btn-reset-points {
+    background: transparent;
+    border: 2px solid #7a8a6c;
+    color: #7a8a6c;
+    font-size: 0.9rem;
+    padding: 8px 24px;
+    border-radius: 50px;
+    cursor: pointer;
+    margin-left: 12px;
+    transition: border-color 0.2s, color 0.2s;
+  }
+
+  .btn-reset-points:hover {
+    border-color: #92A46E;
+    color: #92A46E;
+  }
+
+  /* ---------- Processing Screen ---------- */
+  #processing-screen {
+    display: none;
+    text-align: center;
+    animation: fadeIn 0.6s ease;
+  }
+
+  .processing-image {
+    max-width: 300px;
+    max-height: 300px;
+    border-radius: 12px;
+    margin-bottom: 24px;
+    border: 2px solid #4a5c3a;
+  }
+
+  .loading-spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid #2a3e2a;
+    border-top: 4px solid #92A46E;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 16px;
+  }
+
+  .processing-text {
+    font-size: 1.2rem;
+    color: #b8c5a0;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  /* ---------- Results Screen ---------- */
+  #results-screen {
+    display: none;
+    animation: fadeIn 0.6s ease;
+  }
+
+  .results-header {
+    text-align: center;
+    margin-bottom: 32px;
+  }
+
+  .match-status {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 12px;
+  }
+
+  .match-status.perfect {
+    color: #92A46E;
+  }
+
+  .match-status.close {
+    color: #A8B070;
+  }
+
+  .match-status.acceptable {
+    color: #C5D6A4;
+  }
+
+  .match-status.no-match {
+    color: #d4856c;
+  }
+
+  .match-message {
+    font-size: 1rem;
+    color: #b8c5a0;
+    line-height: 1.6;
+  }
+
+  .color-comparison {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 24px;
+    margin-bottom: 32px;
+    flex-wrap: wrap;
+  }
+
+  .color-result {
+    text-align: center;
+  }
+
+  .color-result-swatch {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    border: 3px solid #4a5c3a;
+    margin: 0 auto 12px;
+  }
+
+  .color-result-label {
+    font-size: 0.85rem;
+    color: #8a9580;
+    margin-bottom: 4px;
+  }
+
+  .color-result-hex {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #f4f1e8;
+    font-family: monospace;
+  }
+
+  .comparison-arrow {
+    font-size: 2rem;
+    color: #6b7a4f;
+  }
+
+  .uploaded-image-preview {
+    max-width: 100%;
+    max-height: 200px;
+    border-radius: 12px;
+    border: 2px solid #4a5c3a;
+    margin-bottom: 24px;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .match-details {
+    background: #253525;
+    border: 2px solid #4a5c3a;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 24px;
+  }
+
+  .match-details-title {
+    font-size: 0.9rem;
+    color: #8a9580;
+    margin-bottom: 8px;
+  }
+
+  .match-details-value {
+    font-size: 1.1rem;
+    color: #f4f1e8;
+    margin-bottom: 4px;
+  }
+
+  .match-score {
+    background: #2a3e2a;
+    border-radius: 8px;
+    padding: 12px;
+    margin-top: 12px;
+  }
+
+  .btn-try-again {
+    background: transparent;
+    border: 2px solid #92A46E;
+    color: #92A46E;
+    font-size: 1rem;
+    padding: 12px 36px;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+    display: block;
+    margin: 0 auto;
+  }
+
+  .btn-try-again:hover {
+    background: #92A46E;
+    color: #1a2e1f;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ---------- Responsive ---------- */
+  @media (max-width: 480px) {
+    #upload-screen h1 {
+      font-size: 2rem;
+    }
+
+    .palette-display {
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      max-width: 100%;
+    }
+
+    .color-comparison {
+      gap: 16px;
+    }
+
+    .color-result-swatch {
+      width: 100px;
+      height: 100px;
+    }
+
+    .comparison-arrow {
+      font-size: 1.5rem;
+    }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Upload Screen -->
+  <div id="upload-screen">
+    <h1>Hanna's Bridesmaid Dress Matcher</h1>
+    <p>Upload a dress photo to see if it matches the wedding color palette</p>
+
+    <div class="palette-display" id="palette-swatches"></div>
+
+    <div class="upload-zone" id="upload-zone">
+      <div class="upload-icon">📸</div>
+      <div class="upload-text">Upload a dress photo</div>
+      <div class="upload-hint">Drag & drop or click to browse</div>
+    </div>
+
+    <input type="file" id="file-input" class="file-input" accept="image/*">
+
+    <div class="tips">
+      💡 Best results with solid-color dresses in natural lighting
+    </div>
+  </div>
+
+  <!-- Point Selection Screen -->
+  <div id="point-selection-screen">
+    <div class="point-selection-header">
+      <h2>Select 3 Points on the Dress</h2>
+      <p>Click on 3 different spots on the dress fabric to sample the color</p>
+    </div>
+
+    <div class="point-counter" id="point-counter">
+      Points selected: <span id="points-count">0</span> / 3
+    </div>
+
+    <div class="image-container" id="image-container">
+      <img id="selectable-image" class="selectable-image" alt="Dress to analyze">
+    </div>
+
+    <div>
+      <button class="btn-analyze" id="btn-analyze" onclick="analyzeSelectedPoints()">
+        Analyze Color
+      </button>
+      <button class="btn-reset-points" onclick="resetPoints()">
+        Reset Points
+      </button>
+    </div>
+  </div>
+
+  <!-- Processing Screen -->
+  <div id="processing-screen">
+    <img id="processing-preview" class="processing-image" alt="Uploaded dress">
+    <div class="loading-spinner"></div>
+    <div class="processing-text">Analyzing colors...</div>
+  </div>
+
+  <!-- Results Screen -->
+  <div id="results-screen">
+    <div class="results-header">
+      <div class="match-status" id="match-status"></div>
+      <div class="match-message" id="match-message"></div>
+    </div>
+
+    <img id="results-image" class="uploaded-image-preview" alt="Your dress">
+
+    <div class="color-comparison">
+      <div class="color-result">
+        <div class="color-result-swatch" id="detected-swatch"></div>
+        <div class="color-result-label">Detected Color</div>
+        <div class="color-result-hex" id="detected-hex"></div>
+      </div>
+
+      <div class="comparison-arrow">→</div>
+
+      <div class="color-result">
+        <div class="color-result-swatch" id="closest-swatch"></div>
+        <div class="color-result-label">Closest Match</div>
+        <div class="color-result-hex" id="closest-hex"></div>
+      </div>
+    </div>
+
+    <div class="match-details">
+      <div class="match-details-title">Closest Palette Color:</div>
+      <div class="match-details-value" id="closest-name"></div>
+      <div class="match-score">
+        <div class="match-details-title">Match Confidence:</div>
+        <div class="match-details-value" id="match-confidence"></div>
+      </div>
+    </div>
+
+    <button class="btn-try-again" onclick="reset()">Try Another Dress</button>
+  </div>
+
+</div>
+
+<canvas id="hidden-canvas" style="display: none;"></canvas>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// CONSTANTS
+// ═══════════════════════════════════════════════════════════
+
+const PALETTE = [
+  // Lake Como Mediterranean Palette - Warm earthy tones
+  { name: "Golden Olive", hex: "#9D916C", rgb: [157, 145, 108] },
+  { name: "Warm Khaki", hex: "#A89968", rgb: [168, 153, 104] },
+  { name: "Dusty Sage", hex: "#B8B594", rgb: [184, 181, 148] },
+  { name: "Moss Green", hex: "#7D7D5A", rgb: [125, 125, 90] },
+  { name: "Earthy Olive", hex: "#6B7A4F", rgb: [107, 122, 79] },
+  { name: "Olive Drab", hex: "#6B6B47", rgb: [107, 107, 71] },
+  { name: "Soft Golden Sage", hex: "#A8B070", rgb: [168, 176, 112] }
+];
+
+const MATCH_THRESHOLDS = {
+  perfect: 70,
+  close: 130,
+  acceptable: 180
+};
+
+const MAX_IMAGE_SIZE = 400; // pixels
+
+// ═══════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════
+
+let currentImage = null;
+let detectedColor = null;
+let matchResult = null;
+let selectedPoints = [];
+let loadedImageElement = null;
+
+// ═══════════════════════════════════════════════════════════
+// INITIALIZATION
+// ═══════════════════════════════════════════════════════════
+
+function init() {
+  renderPaletteSwatches();
+  setupEventListeners();
+}
+
+function renderPaletteSwatches() {
+  const container = document.getElementById('palette-swatches');
+  PALETTE.forEach(color => {
+    const swatch = document.createElement('div');
+    swatch.className = 'color-swatch';
+    swatch.style.backgroundColor = color.hex;
+    swatch.innerHTML = `<div class="color-name">${color.name}</div>`;
+    container.appendChild(swatch);
+  });
+}
+
+function setupEventListeners() {
+  const fileInput = document.getElementById('file-input');
+  const uploadZone = document.getElementById('upload-zone');
+
+  uploadZone.addEventListener('click', () => fileInput.click());
+
+  fileInput.addEventListener('change', handleFileSelect);
+
+  // Drag and drop
+  uploadZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    uploadZone.classList.add('drag-over');
+  });
+
+  uploadZone.addEventListener('dragleave', () => {
+    uploadZone.classList.remove('drag-over');
+  });
+
+  uploadZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    uploadZone.classList.remove('drag-over');
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      handleFile(files[0]);
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════════════════
+// SCREEN MANAGEMENT
+// ═══════════════════════════════════════════════════════════
+
+function showScreen(screenId) {
+  ['upload-screen', 'point-selection-screen', 'processing-screen', 'results-screen'].forEach(id => {
+    document.getElementById(id).style.display = id === screenId ? 'block' : 'none';
+  });
+}
+
+// ═══════════════════════════════════════════════════════════
+// FILE HANDLING
+// ═══════════════════════════════════════════════════════════
+
+function handleFileSelect(event) {
+  const file = event.target.files[0];
+  if (file) {
+    handleFile(file);
+  }
+}
+
+function handleFile(file) {
+  // Validate file type
+  if (!file.type.startsWith('image/')) {
+    alert('Please upload an image file');
+    return;
+  }
+
+  // Validate file size (max 10MB)
+  if (file.size > 10 * 1024 * 1024) {
+    alert('Image is too large. Please upload an image smaller than 10MB');
+    return;
+  }
+
+  currentImage = file;
+  processImage(file);
+}
+
+function processImage(file) {
+  const reader = new FileReader();
+
+  reader.onload = (e) => {
+    const img = new Image();
+    img.onload = () => {
+      // Store the loaded image
+      loadedImageElement = img;
+
+      // Show point selection screen
+      showScreen('point-selection-screen');
+
+      // Set up the selectable image
+      const selectableImg = document.getElementById('selectable-image');
+      selectableImg.src = e.target.result;
+
+      // Reset points
+      selectedPoints = [];
+      updatePointCounter();
+      clearMarkers();
+
+      // Set up click handler
+      const container = document.getElementById('image-container');
+      container.onclick = handleImageClick;
+    };
+    img.src = e.target.result;
+  };
+
+  reader.readAsDataURL(file);
+}
+
+// ═══════════════════════════════════════════════════════════
+// POINT SELECTION
+// ═══════════════════════════════════════════════════════════
+
+function handleImageClick(event) {
+  if (selectedPoints.length >= 3) return;
+
+  const container = document.getElementById('image-container');
+  const img = document.getElementById('selectable-image');
+
+  // Get click position relative to the image
+  const rect = img.getBoundingClientRect();
+  const x = event.clientX - rect.left;
+  const y = event.clientY - rect.top;
+
+  // Store point (as percentage of image dimensions for scaling)
+  const percentX = x / rect.width;
+  const percentY = y / rect.height;
+
+  selectedPoints.push({ x: percentX, y: percentY });
+
+  // Draw marker
+  const marker = document.createElement('div');
+  marker.className = 'point-marker';
+  marker.style.left = x + 'px';
+  marker.style.top = y + 'px';
+  marker.dataset.index = selectedPoints.length - 1;
+  container.appendChild(marker);
+
+  updatePointCounter();
+
+  // Enable analyze button if we have 3 points
+  if (selectedPoints.length === 3) {
+    document.getElementById('btn-analyze').classList.add('active');
+  }
+}
+
+function updatePointCounter() {
+  document.getElementById('points-count').textContent = selectedPoints.length;
+}
+
+function clearMarkers() {
+  const markers = document.querySelectorAll('.point-marker');
+  markers.forEach(marker => marker.remove());
+}
+
+function resetPoints() {
+  selectedPoints = [];
+  updatePointCounter();
+  clearMarkers();
+  document.getElementById('btn-analyze').classList.remove('active');
+}
+
+function analyzeSelectedPoints() {
+  if (selectedPoints.length !== 3) return;
+
+  // Show processing screen
+  showScreen('processing-screen');
+  const img = loadedImageElement;
+  document.getElementById('processing-preview').src = document.getElementById('selectable-image').src;
+
+  // Small delay to show processing screen
+  setTimeout(() => {
+    extractColorFromImage(img);
+  }, 500);
+}
+
+// ═══════════════════════════════════════════════════════════
+// COLOR EXTRACTION
+// ═══════════════════════════════════════════════════════════
+
+function extractColorFromImage(img) {
+  const canvas = document.getElementById('hidden-canvas');
+  const ctx = canvas.getContext('2d');
+
+  // Resize image for faster processing
+  let width = img.width;
+  let height = img.height;
+
+  if (width > MAX_IMAGE_SIZE || height > MAX_IMAGE_SIZE) {
+    if (width > height) {
+      height = (height / width) * MAX_IMAGE_SIZE;
+      width = MAX_IMAGE_SIZE;
+    } else {
+      width = (width / height) * MAX_IMAGE_SIZE;
+      height = MAX_IMAGE_SIZE;
+    }
+  }
+
+  canvas.width = width;
+  canvas.height = height;
+
+  // Draw image to canvas
+  ctx.drawImage(img, 0, 0, width, height);
+
+  // Extract color from selected points
+  const colors = [];
+  selectedPoints.forEach(point => {
+    const x = Math.floor(point.x * width);
+    const y = Math.floor(point.y * height);
+
+    // Get a small region around each point (5x5 pixels) and average
+    const regionSize = 5;
+    let rSum = 0, gSum = 0, bSum = 0, count = 0;
+
+    for (let dy = -regionSize; dy <= regionSize; dy++) {
+      for (let dx = -regionSize; dx <= regionSize; dx++) {
+        const px = Math.max(0, Math.min(width - 1, x + dx));
+        const py = Math.max(0, Math.min(height - 1, y + dy));
+        const pixelData = ctx.getImageData(px, py, 1, 1).data;
+
+        rSum += pixelData[0];
+        gSum += pixelData[1];
+        bSum += pixelData[2];
+        count++;
+      }
+    }
+
+    colors.push([
+      Math.round(rSum / count),
+      Math.round(gSum / count),
+      Math.round(bSum / count)
+    ]);
+  });
+
+  // Average the colors from all 3 points
+  const avgR = Math.round(colors.reduce((sum, c) => sum + c[0], 0) / colors.length);
+  const avgG = Math.round(colors.reduce((sum, c) => sum + c[1], 0) / colors.length);
+  const avgB = Math.round(colors.reduce((sum, c) => sum + c[2], 0) / colors.length);
+
+  const dominantColor = [avgR, avgG, avgB];
+  detectedColor = dominantColor;
+
+  // Find closest match in palette
+  const match = findClosestMatch(dominantColor);
+  matchResult = match;
+
+  // Show results
+  displayResults(img.src);
+}
+
+function getDominantColor(pixels) {
+  const colorCounts = {};
+  const bucketSize = 16; // Reduce color space for bucketing
+
+  // Sample every 10th pixel for performance
+  for (let i = 0; i < pixels.length; i += 40) {
+    const r = pixels[i];
+    const g = pixels[i + 1];
+    const b = pixels[i + 2];
+    const a = pixels[i + 3];
+
+    // Skip transparent or very dark/light pixels
+    if (a < 128 || (r < 20 && g < 20 && b < 20) || (r > 235 && g > 235 && b > 235)) {
+      continue;
+    }
+
+    // Bucket colors
+    const rBucket = Math.floor(r / bucketSize) * bucketSize;
+    const gBucket = Math.floor(g / bucketSize) * bucketSize;
+    const bBucket = Math.floor(b / bucketSize) * bucketSize;
+
+    const key = `${rBucket},${gBucket},${bBucket}`;
+    colorCounts[key] = (colorCounts[key] || 0) + 1;
+  }
+
+  // Find most common bucket
+  let maxCount = 0;
+  let dominantBucket = null;
+
+  for (const [key, count] of Object.entries(colorCounts)) {
+    if (count > maxCount) {
+      maxCount = count;
+      dominantBucket = key;
+    }
+  }
+
+  // Convert back to RGB
+  const [r, g, b] = dominantBucket.split(',').map(Number);
+
+  // Refine by averaging all pixels in winning bucket
+  let rSum = 0, gSum = 0, bSum = 0, count = 0;
+
+  for (let i = 0; i < pixels.length; i += 40) {
+    const pr = pixels[i];
+    const pg = pixels[i + 1];
+    const pb = pixels[i + 2];
+    const a = pixels[i + 3];
+
+    if (a < 128) continue;
+
+    const rBucket = Math.floor(pr / bucketSize) * bucketSize;
+    const gBucket = Math.floor(pg / bucketSize) * bucketSize;
+    const bBucket = Math.floor(pb / bucketSize) * bucketSize;
+
+    if (rBucket === r && gBucket === g && bBucket === b) {
+      rSum += pr;
+      gSum += pg;
+      bSum += pb;
+      count++;
+    }
+  }
+
+  return [
+    Math.round(rSum / count),
+    Math.round(gSum / count),
+    Math.round(bSum / count)
+  ];
+}
+
+// ═══════════════════════════════════════════════════════════
+// COLOR MATCHING
+// ═══════════════════════════════════════════════════════════
+
+function findClosestMatch(detectedRgb) {
+  let minDistance = Infinity;
+  let closestColor = null;
+
+  PALETTE.forEach(paletteColor => {
+    const distance = colorDistance(detectedRgb, paletteColor.rgb);
+    if (distance < minDistance) {
+      minDistance = distance;
+      closestColor = paletteColor;
+    }
+  });
+
+  return {
+    color: closestColor,
+    distance: minDistance,
+    quality: getMatchQuality(minDistance)
+  };
+}
+
+function colorDistance(rgb1, rgb2) {
+  // Weighted Euclidean distance (perceptual)
+  const rWeight = 2.0;
+  const gWeight = 4.0; // Humans more sensitive to green
+  const bWeight = 3.0;
+
+  const rDiff = (rgb1[0] - rgb2[0]) * rWeight;
+  const gDiff = (rgb1[1] - rgb2[1]) * gWeight;
+  const bDiff = (rgb1[2] - rgb2[2]) * bWeight;
+
+  return Math.sqrt(rDiff * rDiff + gDiff * gDiff + bDiff * bDiff);
+}
+
+function getMatchQuality(distance) {
+  if (distance < MATCH_THRESHOLDS.perfect) {
+    return {
+      level: 'perfect',
+      title: 'Perfect Match! ✓',
+      message: 'This dress matches your palette beautifully! The color is spot-on and will look amazing with your bridesmaid lineup.',
+      confidence: Math.round((1 - distance / MATCH_THRESHOLDS.perfect) * 100)
+    };
+  } else if (distance < MATCH_THRESHOLDS.close) {
+    return {
+      level: 'close',
+      title: 'Close Match!',
+      message: 'This dress is very close to your palette! The color should work well and blend nicely with your other bridesmaid dresses.',
+      confidence: Math.round((1 - distance / MATCH_THRESHOLDS.close) * 100)
+    };
+  } else if (distance < MATCH_THRESHOLDS.acceptable) {
+    return {
+      level: 'acceptable',
+      title: 'Could Work',
+      message: 'This dress is in the right family but might be slightly off from your exact palette. Consider comparing in person with your other dresses.',
+      confidence: Math.round((1 - distance / MATCH_THRESHOLDS.acceptable) * 100)
+    };
+  } else {
+    return {
+      level: 'no-match',
+      title: 'Not Quite Right',
+      message: 'This dress doesn\'t quite match your palette. It might stand out from your other bridesmaid dresses. Consider trying a different shade!',
+      confidence: 0
+    };
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// RESULTS DISPLAY
+// ═══════════════════════════════════════════════════════════
+
+function displayResults(imageSrc) {
+  const detectedHex = rgbToHex(detectedColor[0], detectedColor[1], detectedColor[2]);
+  const quality = matchResult.quality;
+
+  // Set image
+  document.getElementById('results-image').src = imageSrc;
+
+  // Set match status
+  const statusEl = document.getElementById('match-status');
+  statusEl.textContent = quality.title;
+  statusEl.className = `match-status ${quality.level}`;
+
+  // Set match message
+  document.getElementById('match-message').textContent = quality.message;
+
+  // Set detected color
+  document.getElementById('detected-swatch').style.backgroundColor = detectedHex;
+  document.getElementById('detected-hex').textContent = detectedHex.toUpperCase();
+
+  // Set closest palette color
+  document.getElementById('closest-swatch').style.backgroundColor = matchResult.color.hex;
+  document.getElementById('closest-hex').textContent = matchResult.color.hex.toUpperCase();
+
+  // Set match details
+  document.getElementById('closest-name').textContent = matchResult.color.name;
+
+  const confidenceText = quality.confidence > 0
+    ? `${quality.confidence}% match`
+    : 'Try a different color';
+  document.getElementById('match-confidence').textContent = confidenceText;
+
+  // Show results screen
+  showScreen('results-screen');
+}
+
+// ═══════════════════════════════════════════════════════════
+// UTILITIES
+// ═══════════════════════════════════════════════════════════
+
+function rgbToHex(r, g, b) {
+  return "#" + [r, g, b].map(x => {
+    const hex = x.toString(16);
+    return hex.length === 1 ? "0" + hex : hex;
+  }).join('');
+}
+
+function reset() {
+  currentImage = null;
+  detectedColor = null;
+  matchResult = null;
+  selectedPoints = [];
+  loadedImageElement = null;
+  document.getElementById('file-input').value = '';
+  clearMarkers();
+  showScreen('upload-screen');
+}
+
+// ═══════════════════════════════════════════════════════════
+// START
+// ═══════════════════════════════════════════════════════════
+
+init();
+</script>
+</body>
+</html>
