@@ -944,28 +944,28 @@ function getMatchQuality(distance) {
     return {
       level: 'perfect',
       title: 'Perfect Match! ✓',
-      message: 'This dress matches your palette beautifully! The color is spot-on and will look amazing with your bridesmaid lineup.',
+      message: 'This dress matches the palette beautifully. Good job. Go buy that dress :D (just send it to the group first)',
       confidence: Math.round((1 - distance / MATCH_THRESHOLDS.perfect) * 100)
     };
   } else if (distance < MATCH_THRESHOLDS.close) {
     return {
       level: 'close',
       title: 'Close Match!',
-      message: 'This dress is very close to your palette! The color should work well and blend nicely with your other bridesmaid dresses.',
+      message: 'This dress is very close to the palette! It should work pretty well and blend nicely. just please send it to the group first!',
       confidence: Math.round((1 - distance / MATCH_THRESHOLDS.close) * 100)
     };
   } else if (distance < MATCH_THRESHOLDS.acceptable) {
     return {
       level: 'acceptable',
       title: 'Could Work',
-      message: 'This dress is in the right family but might be slightly off from your exact palette. Consider comparing in person with your other dresses.',
+      message: 'ehhhh This dress is in the right family but might be slightly off. Send to the group to confirm please!',
       confidence: Math.round((1 - distance / MATCH_THRESHOLDS.acceptable) * 100)
     };
   } else {
     return {
       level: 'no-match',
       title: 'Not Quite Right',
-      message: 'This dress doesn\'t quite match your palette. It might stand out from your other bridesmaid dresses. Consider trying a different shade!',
+      message: 'Not quite - you might be standing out from the other bridesmaid dresses. Send it to the group if you\'re really passionate about it but consider finding something else',
       confidence: 0
     };
   }
