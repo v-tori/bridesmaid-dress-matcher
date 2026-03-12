@@ -1,6 +1,6 @@
 # Hanna's Bridesmaid Dress Matcher
 
-A web app to help match bridesmaid dress colors to our Lake Como wedding palette.
+A web app to help match bridesmaid dress colors to Hanna's Lake Como wedding palette.
 
 ## Features
 
