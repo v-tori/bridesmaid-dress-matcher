@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Hanna's Bridesmaid Dress Matcher</title>
+<title>Hanna's Bridesmaid Dress Matcher v2</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -465,7 +465,7 @@
     <input type="file" id="file-input" class="file-input" accept="image/*">
 
     <div class="tips">
-      💡 Best results with solid-color dresses in natural lighting
+      💡 Works with patterned fabrics too - we'll find the best-matching color from your 3 sample points
     </div>
   </div>
 
@@ -565,9 +565,9 @@ const PALETTE = [
 ];
 
 const MATCH_THRESHOLDS = {
-  perfect: 70,
-  close: 130,
-  acceptable: 180
+  perfect: 30,
+  close: 55,
+  acceptable: 85
 };
 
 const MAX_IMAGE_SIZE = 400; // pixels
@@ -824,19 +824,23 @@ function extractColorFromImage(img) {
     ]);
   });
 
-  // Average the colors from all 3 points
-  const avgR = Math.round(colors.reduce((sum, c) => sum + c[0], 0) / colors.length);
-  const avgG = Math.round(colors.reduce((sum, c) => sum + c[1], 0) / colors.length);
-  const avgB = Math.round(colors.reduce((sum, c) => sum + c[2], 0) / colors.length);
+  // Match each point independently and pick the best match
+  let bestMatch = null;
+  let bestColor = null;
+  let bestDistance = Infinity;
 
-  const dominantColor = [avgR, avgG, avgB];
-  detectedColor = dominantColor;
+  colors.forEach(color => {
+    const match = findClosestMatch(color);
+    if (match.distance < bestDistance) {
+      bestDistance = match.distance;
+      bestMatch = match;
+      bestColor = color;
+    }
+  });
 
-  // Find closest match in palette
-  const match = findClosestMatch(dominantColor);
-  matchResult = match;
+  detectedColor = bestColor;
+  matchResult = bestMatch;
 
-  // Show results
   displayResults(img.src);
 }
 
@@ -933,16 +937,28 @@ function findClosestMatch(detectedRgb) {
 }
 
 function colorDistance(rgb1, rgb2) {
-  // Weighted Euclidean distance (perceptual)
-  const rWeight = 2.0;
-  const gWeight = 4.0; // Humans more sensitive to green
-  const bWeight = 3.0;
+  const hsl1 = rgbToHsl(rgb1[0], rgb1[1], rgb1[2]);
+  const hsl2 = rgbToHsl(rgb2[0], rgb2[1], rgb2[2]);
 
-  const rDiff = (rgb1[0] - rgb2[0]) * rWeight;
-  const gDiff = (rgb1[1] - rgb2[1]) * gWeight;
-  const bDiff = (rgb1[2] - rgb2[2]) * bWeight;
+  let hueDiff = Math.abs(hsl1[0] - hsl2[0]);
+  if (hueDiff > 180) hueDiff = 360 - hueDiff;
 
-  return Math.sqrt(rDiff * rDiff + gDiff * gDiff + bDiff * bDiff);
+  const satDiff = Math.abs(hsl1[1] - hsl2[1]);
+  const litDiff = Math.abs(hsl1[2] - hsl2[2]);
+
+  // At low saturation, hue becomes unreliable
+  const minSat = Math.min(hsl1[1], hsl2[1]);
+  const satFactor = Math.min(minSat / 5, 1);
+
+  const hueWeight = 2.0 * satFactor;
+  const satWeight = 1.0;
+  const litWeight = 0.5;
+
+  return Math.sqrt(
+    (hueDiff * hueWeight) ** 2 +
+    (satDiff * satWeight) ** 2 +
+    (litDiff * litWeight) ** 2
+  );
 }
 
 function getMatchQuality(distance) {
@@ -1007,10 +1023,12 @@ function displayResults(imageSrc) {
   // Set match details
   document.getElementById('closest-name').textContent = matchResult.color.name;
 
+  const detectedHsl = rgbToHsl(detectedColor[0], detectedColor[1], detectedColor[2]);
   const confidenceText = quality.confidence > 0
     ? `${quality.confidence}% match`
     : 'Try a different color';
-  document.getElementById('match-confidence').textContent = confidenceText;
+  document.getElementById('match-confidence').textContent =
+    `${confidenceText} — distance: ${matchResult.distance.toFixed(1)} | detected HSL: ${detectedHsl.map(v => v.toFixed(0)).join(', ')} | RGB: ${detectedColor.join(', ')}`;
 
   // Show results screen
   showScreen('results-screen');
@@ -1019,6 +1037,26 @@ function displayResults(imageSrc) {
 // ═══════════════════════════════════════════════════════════
 // UTILITIES
 // ═══════════════════════════════════════════════════════════
+
+function rgbToHsl(r, g, b) {
+  r /= 255; g /= 255; b /= 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  let h, s, l = (max + min) / 2;
+
+  if (max === min) {
+    h = s = 0;
+  } else {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+      case g: h = ((b - r) / d + 2) / 6; break;
+      case b: h = ((r - g) / d + 4) / 6; break;
+    }
+  }
+
+  return [h * 360, s * 100, l * 100];
+}
 
 function rgbToHex(r, g, b) {
   return "#" + [r, g, b].map(x => {
