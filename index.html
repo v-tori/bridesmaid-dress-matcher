@@ -950,7 +950,7 @@ function colorDistance(rgb1, rgb2) {
   const minSat = Math.min(hsl1[1], hsl2[1]);
   const satFactor = Math.min(minSat / 5, 1);
 
-  const hueWeight = 2.0 * satFactor;
+  const hueWeight = 3.0 * satFactor;
   const satWeight = 1.0;
   const litWeight = 0.5;
 
